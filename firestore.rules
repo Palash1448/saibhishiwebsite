@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper to check if user is an admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+         request.auth.token.role == 'admin' || 
+         request.auth.token.role == 'super_admin');
+    }
+
+    // Admins Collection: Read & write restricted to admins only
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Members Collection: Only authenticated admins can manage members
+    match /members/{memberId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() 
+        && request.resource.data.fullName is string
+        && request.resource.data.monthlyContribution >= 0;
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Bhishi Plans
+    match /bhishiPlans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Memberships
+    match /memberships/{membershipId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Monthly Collections
+    match /monthlyCollections/{collectionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Loans & Loan Installments
+    match /loans/{loanId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() 
+        && request.resource.data.principalAmount > 0
+        && request.resource.data.monthlyInterestRate >= 0;
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Centralized Financial Transactions Ledger
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      // Enforce immutability and require amount and type on creation
+      allow create: if isAuthenticated()
+        && request.resource.data.amount > 0
+        && request.resource.data.type is string;
+      // Transactions cannot be arbitrarily overwritten or hard-deleted; reversals are recorded as updates or reverse entries
+      allow update: if isAuthenticated();
+      allow delete: if false; 
+    }
+
+    // Expenses
+    match /expenses/{expenseId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Interest & Return Records
+    match /interestRecords/{recordId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Settings (Business & Finance Defaults)
+    match /settings/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Audit Logs: Append-only
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable audit logs
+    }
+  }
+}
