@@ -89,35 +89,35 @@ export const SettingsPage: React.FC = () => {
     success('Backup Created', 'Full database snapshot downloaded as JSON file.');
   };
 
-  const handleResetSample = () => {
+  const handleClearCache = () => {
     confirm({
-      title: 'Reset to Realistic Demo Data?',
-      message: 'This will reload sample members, Bhishi schemes, loans, and collections. All active balances will be restored to realistic starting state.',
-      confirmText: 'Yes, Reset Data',
-      variant: 'warning',
+      title: 'Clear Local Cache & Resync Cloud Data?',
+      message: 'This will purge local cached copies and fetch fresh records directly from the secure cloud database.',
+      confirmText: 'Yes, Resync Cloud',
+      variant: 'primary',
       onConfirm: () => {
         resetToSampleData();
-        success('Demo Data Reset', 'Realistic Indian finance records repopulated.');
+        success('Cloud Resynced', 'Loaded latest data from secure cloud.');
       },
     });
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Header Bar */}
-      <div className="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-card">
-        <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-card">
+        <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
           System & Business Settings
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
           Configure organization profile, official receipt formatting, and default financial rules
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 1. Business Profile Settings */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-card">
-          <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card">
+          <div className="flex items-center gap-2.5 pb-3.5 border-b border-slate-100 mb-4 sm:mb-5">
             <Building className="w-5 h-5 text-emerald-600" />
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
               Business Profile & Receipts
@@ -189,7 +189,7 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t flex justify-end">
-              <Button type="submit" variant="primary" size="md" isLoading={loadingBiz} leftIcon={<Save className="w-4 h-4" />}>
+              <Button type="submit" variant="primary" size="md" isLoading={loadingBiz} leftIcon={<Save className="w-4 h-4" />} className="w-full sm:w-auto justify-center">
                 Save Business Profile
               </Button>
             </div>
@@ -197,10 +197,10 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {/* 2. Finance Defaults & Backup */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Finance Settings */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-card">
-            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card">
+            <div className="flex items-center gap-2.5 pb-3.5 border-b border-slate-100 mb-4 sm:mb-5">
               <DollarSign className="w-5 h-5 text-emerald-600" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                 Default Financial Parameters
@@ -210,12 +210,46 @@ export const SettingsPage: React.FC = () => {
             <form onSubmit={handleSaveFin} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
+                  label="Default Monthly Return Rate"
+                  type="number"
+                  step="0.01"
+                  suffixText="% / mo"
+                  value={fin.defaultMonthlyReturnRate ?? 1.0}
+                  onChange={(e) => {
+                    const mRate = Number(e.target.value);
+                    setFin({
+                      ...fin,
+                      defaultMonthlyReturnRate: mRate,
+                      defaultAnnualReturnRate: Math.round(mRate * 12 * 10) / 10,
+                    });
+                  }}
+                  helperText={`Equivalent to ${(fin.defaultMonthlyReturnRate || 1) * 12}% p.a. yearly return`}
+                />
+
+                <Input
                   label="Default Annual Return Rate"
                   type="number"
                   step="0.1"
                   suffixText="% p.a."
                   value={fin.defaultAnnualReturnRate}
-                  onChange={(e) => setFin({ ...fin, defaultAnnualReturnRate: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const aRate = Number(e.target.value);
+                    setFin({
+                      ...fin,
+                      defaultAnnualReturnRate: aRate,
+                      defaultMonthlyReturnRate: Math.round((aRate / 12) * 100) / 100,
+                    });
+                  }}
+                />
+
+                <Input
+                  label="Default Monthly Interest Cutoff Day"
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={fin.defaultInterestCutoffDay ?? 10}
+                  onChange={(e) => setFin({ ...fin, defaultInterestCutoffDay: Number(e.target.value) })}
+                  helperText="Deposits after this day forfeit interest for that month only"
                 />
 
                 <Input
@@ -234,6 +268,7 @@ export const SettingsPage: React.FC = () => {
                   options={[
                     { value: 'flat', label: 'Flat Interest Rate' },
                     { value: 'reducing_balance', label: 'Reducing Balance EMI' },
+                    { value: 'interest_only', label: 'Interest Only Payment (Principal at end)' },
                   ]}
                 />
 
@@ -247,43 +282,45 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div className="pt-3 border-t flex justify-end">
-                <Button type="submit" variant="primary" size="md" isLoading={loadingFin} leftIcon={<Save className="w-4 h-4" />}>
+                <Button type="submit" variant="primary" size="md" isLoading={loadingFin} leftIcon={<Save className="w-4 h-4" />} className="w-full sm:w-auto justify-center">
                   Save Financial Defaults
                 </Button>
               </div>
             </form>
           </div>
 
-          {/* Backup & Sandbox Management */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-card space-y-4">
+          {/* Backup & Cloud Sync */}
+          <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card space-y-4">
             <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
               <Database className="w-5 h-5 text-indigo-600" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                Database Backup & Demo Sandbox
+                Database Backup & Cloud Sync
               </h2>
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              Export complete encrypted ledger backups or reset sandbox data during testing.
+              Export complete encrypted ledger backups or resync local caches directly with secure cloud storage.
             </p>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
                 leftIcon={<Download className="w-4 h-4 text-emerald-600" />}
                 onClick={handleBackupAllJSON}
+                className="flex-1 sm:flex-none justify-center"
               >
-                Download Full JSON Backup
+                Download JSON Backup
               </Button>
 
               <Button
                 variant="secondary"
                 size="sm"
-                leftIcon={<RotateCcw className="w-4 h-4 text-amber-600" />}
-                onClick={handleResetSample}
+                leftIcon={<RotateCcw className="w-4 h-4 text-emerald-600" />}
+                onClick={handleClearCache}
+                className="flex-1 sm:flex-none justify-center"
               >
-                Reload Sample Demo Data
+                Resync with Cloud
               </Button>
             </div>
           </div>

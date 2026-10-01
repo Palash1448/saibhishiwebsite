@@ -21,7 +21,9 @@ export interface BusinessSettings {
 }
 
 export interface FinanceSettings {
+  defaultMonthlyReturnRate: number; // e.g. 1% or 1.5% per month
   defaultAnnualReturnRate: number; // e.g. 12%
+  defaultInterestCutoffDay: number; // e.g. 10th of every month (deposits after forfeit this month's interest)
   defaultBhishiCalculationMethod: BhishiCalculationMethod;
   defaultMonthlyLoanInterestRate: number; // e.g. 2%
   defaultLoanCalculationMethod: LoanCalculationMethod;

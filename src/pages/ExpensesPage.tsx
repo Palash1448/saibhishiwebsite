@@ -62,24 +62,25 @@ export const ExpensesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-card">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-card">
         <div>
-          <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
-            Business & Office Expense Management
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
+            Business & Operating Expenses
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Track operational disbursements, branch office rent, salaries, utilities, travel and logistics
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Track operational disbursements, rent, salaries, utilities, and logistics
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             leftIcon={<Download className="w-4 h-4" />}
             onClick={handleExportCSV}
+            className="flex-1 sm:flex-none justify-center"
           >
             Export CSV
           </Button>
@@ -89,17 +90,18 @@ export const ExpensesPage: React.FC = () => {
             size="sm"
             leftIcon={<Plus className="w-4 h-4" />}
             onClick={() => setIsModalOpen(true)}
+            className="flex-1 sm:flex-none justify-center"
           >
-            + Add New Expense
+            + Add Expense
           </Button>
         </div>
       </div>
 
       {/* Summary KPI Cards & Category Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-rose-950 text-rose-100 p-5 rounded-3xl border border-rose-900 shadow-card">
-          <p className="text-xs font-semibold uppercase tracking-wider text-rose-300">Total Operating Expenses</p>
-          <h2 className="text-3xl font-black font-mono text-white mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-rose-950 text-rose-100 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-rose-900 shadow-card">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-rose-300">Total Operating Expenses</p>
+          <h2 className="text-2xl sm:text-3xl font-black font-mono text-white mt-1">
             {formatCurrency(expenseSummary.totalExpense)}
           </h2>
           <p className="text-xs text-rose-300/80 mt-1">
@@ -108,15 +110,15 @@ export const ExpensesPage: React.FC = () => {
         </div>
 
         {/* Category Breakdown Bar */}
-        <div className="md:col-span-2 bg-white p-5 rounded-3xl border border-slate-100 shadow-card flex flex-col justify-center">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+        <div className="md:col-span-2 bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card flex flex-col justify-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
             Top Expense Categories
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-xs">
             {expenseSummary.categoryBreakdown.slice(0, 4).map((cat) => (
-              <div key={cat.category} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-slate-500 font-semibold">{cat.category}</span>
-                <p className="font-bold font-mono text-slate-900 text-sm mt-0.5">{formatCurrency(cat.total)}</p>
+              <div key={cat.category} className="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100">
+                <span className="text-slate-500 font-semibold truncate block text-[11px]">{cat.category}</span>
+                <p className="font-bold font-mono text-slate-900 text-xs sm:text-sm mt-0.5">{formatCurrency(cat.total)}</p>
                 <div className="w-full bg-slate-200 h-1 rounded-full mt-1.5 overflow-hidden">
                   <div className="bg-rose-500 h-full" style={{ width: `${cat.percentage}%` }}></div>
                 </div>
@@ -127,7 +129,7 @@ export const ExpensesPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="w-full sm:max-w-md">
           <SearchInput
             value={search}
@@ -150,71 +152,119 @@ export const ExpensesPage: React.FC = () => {
         </select>
       </div>
 
-      {/* Expenses Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
-        {filtered.length === 0 ? (
-          <p className="p-12 text-center text-slate-400 text-xs">No expenses recorded for this criteria.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
-                <tr>
-                  <th className="py-3.5 px-6">Expense # / Date</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Description & Particulars</th>
-                  <th className="py-3.5 px-4">Paid To</th>
-                  <th className="py-3.5 px-4">Payment Method</th>
-                  <th className="py-3.5 px-4 text-right">Amount (₹)</th>
-                  <th className="py-3.5 px-6 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((e) => (
-                  <tr key={e.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-6">
-                      <p className="font-mono font-bold text-slate-900">{e.expenseNumber}</p>
-                      <p className="text-[11px] text-slate-500">{formatDate(e.date)}</p>
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+      {/* Expenses Content: Mobile Native Cards vs Desktop Table */}
+      {filtered.length === 0 ? (
+        <div className="bg-white p-12 text-center rounded-2xl border border-slate-100">
+          <p className="text-sm font-semibold text-slate-700">No expenses recorded for this criteria.</p>
+          <p className="text-xs text-slate-400 mt-1">Add operational expenses to track outflows.</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile Native Expense Card Feed */}
+          <div className="space-y-3 sm:hidden">
+            {filtered.map((e) => (
+              <div
+                key={e.id}
+                className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                         {e.category}
                       </span>
-                    </td>
+                      <span className="font-mono text-[11px] text-slate-400">#{e.expenseNumber}</span>
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-sm mt-1">{e.description}</h3>
+                  </div>
 
-                    <td className="py-4 px-4 font-medium text-slate-800 max-w-xs">
-                      {e.description}
-                      {e.notes && <p className="text-[11px] text-slate-400 mt-0.5">{e.notes}</p>}
-                    </td>
+                  <div className="text-right shrink-0">
+                    <p className="text-base font-extrabold font-mono text-rose-600">-{formatCurrency(e.amount)}</p>
+                    <span className="text-[10px] text-slate-400 block">{formatDate(e.date)}</span>
+                  </div>
+                </div>
 
-                    <td className="py-4 px-4 text-slate-700">
-                      {e.recipientName || '—'}
-                    </td>
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                  <div className="truncate">
+                    <span>Paid to: <strong className="text-slate-800">{e.recipientName || 'General'}</strong></span>
+                    <span className="text-slate-400 ml-1">({e.paymentMethod})</span>
+                  </div>
 
-                    <td className="py-4 px-4 font-medium text-slate-700">
-                      {e.paymentMethod}
-                    </td>
-
-                    <td className="py-4 px-4 text-right font-mono font-bold text-rose-600 text-sm">
-                      -{formatCurrency(e.amount)}
-                    </td>
-
-                    <td className="py-4 px-6 text-right">
-                      <button
-                        onClick={() => handleDelete(e)}
-                        title="Delete Expense"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  <button
+                    onClick={() => handleDelete(e)}
+                    title="Delete Expense"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer shrink-0 ml-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+
+          {/* Desktop Expenses Table */}
+          <div className="hidden sm:block bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
+                  <tr>
+                    <th className="py-3.5 px-6">Expense # / Date</th>
+                    <th className="py-3.5 px-4">Category</th>
+                    <th className="py-3.5 px-4">Description & Particulars</th>
+                    <th className="py-3.5 px-4">Paid To</th>
+                    <th className="py-3.5 px-4">Payment Method</th>
+                    <th className="py-3.5 px-4 text-right">Amount (₹)</th>
+                    <th className="py-3.5 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.map((e) => (
+                    <tr key={e.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-4 px-6">
+                        <p className="font-mono font-bold text-slate-900">{e.expenseNumber}</p>
+                        <p className="text-[11px] text-slate-500">{formatDate(e.date)}</p>
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                          {e.category}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-4 font-medium text-slate-800 max-w-xs">
+                        {e.description}
+                        {e.notes && <p className="text-[11px] text-slate-400 mt-0.5">{e.notes}</p>}
+                      </td>
+
+                      <td className="py-4 px-4 text-slate-700">
+                        {e.recipientName || '—'}
+                      </td>
+
+                      <td className="py-4 px-4 font-medium text-slate-700">
+                        {e.paymentMethod}
+                      </td>
+
+                      <td className="py-4 px-4 text-right font-mono font-bold text-rose-600 text-sm">
+                        -{formatCurrency(e.amount)}
+                      </td>
+
+                      <td className="py-4 px-6 text-right">
+                        <button
+                          onClick={() => handleDelete(e)}
+                          title="Delete Expense"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Add Modal */}
       {isModalOpen && (

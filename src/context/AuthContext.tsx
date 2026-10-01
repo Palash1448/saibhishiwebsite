@@ -1,13 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AdminUser, AuthState } from '../types/user';
-import { loginAdmin, logoutAdmin, requestPasswordReset, subscribeToAuthState, DEMO_ADMIN_USER } from '../firebase/auth';
+import { AdminUser, AuthState, UserRole } from '../types/user';
+import {
+  loginAdmin,
+  registerAdmin,
+  logoutAdmin,
+  requestPasswordReset,
+  subscribeToAuthState,
+} from '../firebase/auth';
 import { isFirebaseConfigured } from '../firebase/config';
 
 interface AuthContextType extends AuthState {
   login: (email: string, pass: string) => Promise<AdminUser>;
+  register: (email: string, pass: string, displayName: string, role?: UserRole) => Promise<AdminUser>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  switchUserRole: (role: 'super_admin' | 'admin' | 'manager' | 'viewer') => void;
+  switchUserRole: (role: UserRole) => void;
   isSuperAdmin: boolean;
   isAdmin: boolean;
 }
@@ -24,11 +31,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
     }
-    // Default to DEMO_ADMIN_USER for instant out-of-the-box evaluation if not set
-    return DEMO_ADMIN_USER;
+    return null;
   });
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +61,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async (
+    email: string,
+    pass: string,
+    displayName: string,
+    role: UserRole = 'admin'
+  ): Promise<AdminUser> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const newUser = await registerAdmin(email, pass, displayName, role);
+      setUser(newUser);
+      return newUser;
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     setLoading(true);
     try {
@@ -69,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await requestPasswordReset(email);
   };
 
-  const switchUserRole = (role: 'super_admin' | 'admin' | 'manager' | 'viewer') => {
+  const switchUserRole = (role: UserRole) => {
     if (!user) return;
     const updated = { ...user, role };
     setUser(updated);
@@ -87,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         isDemoMode: !isFirebaseConfigured,
         login,
+        register,
         logout,
         resetPassword,
         switchUserRole,

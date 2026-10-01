@@ -9,34 +9,27 @@ import { Button } from '../../components/common/Button';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Badge, getStatusBadgeVariant } from '../../components/common/Badge';
 import { MemberFormModal } from '../../components/members/MemberFormModal';
-import { formatCurrency, formatDate, maskSensitiveId } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/formatters';
 import { exportToCSV } from '../../utils/exportUtils';
 import {
   UserPlus,
   Download,
-  Filter,
   Eye,
   Edit2,
-  Trash2,
   Phone,
   MapPin,
-  CircleDollarSign,
   CreditCard,
-  Layers,
-  ArrowUpDown,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 
 export const MembersListPage: React.FC = () => {
-  const { members, plans, refreshAll } = useData();
+  const { members, refreshAll } = useData();
   const { success } = useToast();
   const { confirm } = useConfirm();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<MemberStatus | 'all'>('all');
-  const [planFilter, setPlanFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'code' | 'joiningDate' | 'totalInvested' | 'outstandingLoan'>('joiningDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -47,7 +40,6 @@ export const MembersListPage: React.FC = () => {
   const filtered = filterMembers(members, {
     searchQuery,
     status: statusFilter,
-    bhishiPlanId: planFilter,
     sortBy,
     sortOrder,
   });
@@ -55,7 +47,7 @@ export const MembersListPage: React.FC = () => {
   const handleArchive = (member: Member) => {
     confirm({
       title: 'Archive Member?',
-      message: `Are you sure you want to mark ${member.fullName} (${member.memberCode}) as inactive? Existing transaction and loan history will remain intact.`,
+      message: `Are you sure you want to mark ${member.fullName} (${member.memberCode}) as inactive?`,
       confirmText: 'Yes, Inactivate',
       variant: 'warning',
       onConfirm: async () => {
@@ -72,17 +64,12 @@ export const MembersListPage: React.FC = () => {
       filtered.map((m) => ({
         'Member ID': m.memberCode,
         'Full Name': m.fullName,
-        'Mobile Number': m.mobile,
-        'Alternate Phone': m.alternateMobile || '',
-        'Email': m.email || '',
-        'City/Village': m.villageCity || '',
-        'Plan': m.bhishiPlanName || 'None',
-        'Monthly Due (₹)': m.monthlyContribution,
-        'Total Invested (₹)': m.totalInvested,
-        'Total Returns (₹)': m.totalReturns,
-        'Active Loan Due (₹)': m.outstandingLoan,
+        'Phone Number': m.mobile,
+        'Address': m.address,
+        'Aadhaar Number': m.aadharNumber || m.idProofRef || '',
+        'Total Invested (₹)': m.totalInvested || 0,
+        'Active Loan Due (₹)': m.outstandingLoan || 0,
         'Status': m.status,
-        'Joining Date': m.joiningDate,
       }))
     );
   };
@@ -96,7 +83,7 @@ export const MembersListPage: React.FC = () => {
             Member Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Customer KYC records, Bhishi memberships, and balances ({members.length} members)
+            Registered members directory ({members.length} members)
           </p>
         </div>
 
@@ -106,7 +93,6 @@ export const MembersListPage: React.FC = () => {
             size="sm"
             leftIcon={<Download className="w-4 h-4" />}
             onClick={handleExportCSV}
-            className="flex-1 sm:flex-none justify-center"
           >
             Export CSV
           </Button>
@@ -115,24 +101,28 @@ export const MembersListPage: React.FC = () => {
             variant="primary"
             size="sm"
             leftIcon={<UserPlus className="w-4 h-4" />}
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex-1 sm:flex-none justify-center"
+            onClick={() => {
+              setMemberToEdit(null);
+              setIsAddModalOpen(true);
+            }}
           >
-            + Add Member
+            Register Member
           </Button>
         </div>
       </div>
 
-      {/* Mobile-Friendly Search & Horizontal Filter Bar */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-xs space-y-3">
-        <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search by name, ID (MEM-1001), phone, city..."
-        />
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-100 shadow-card flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="w-full sm:max-w-md">
+          <SearchInput
+            placeholder="Search by name, phone, address, or Aadhaar..."
+            value={searchQuery}
+            onChange={(val) => setSearchQuery(val)}
+          />
+        </div>
 
-        {/* Native Horizontal Pill Filters on Mobile */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+        {/* Status filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
@@ -166,54 +156,18 @@ export const MembersListPage: React.FC = () => {
           >
             Inactive
           </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('completed')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer ${
-              statusFilter === 'completed'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Completed
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('suspended')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer ${
-              statusFilter === 'suspended'
-                ? 'bg-rose-600 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Suspended
-          </button>
-
-          {/* Plan filter dropdown */}
-          <select
-            value={planFilter}
-            onChange={(e) => setPlanFilter(e.target.value)}
-            className="bg-slate-100 border-none rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none shrink-0"
-          >
-            <option value="all">All Plans</option>
-            {plans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.planName}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
-      {/* Content Area: Mobile Native Cards vs Desktop Table */}
+      {/* Content Area: Mobile Cards vs Desktop Table */}
       {filtered.length === 0 ? (
         <div className="bg-white p-10 text-center rounded-2xl border border-slate-100">
           <p className="text-sm font-semibold text-slate-700">No members match your search or filter.</p>
-          <p className="text-xs text-slate-400 mt-1">Try resetting search terms.</p>
+          <p className="text-xs text-slate-400 mt-1">Try resetting search terms or click &quot;Register Member&quot; to add one.</p>
         </div>
       ) : (
         <>
-          {/* Mobile Native Fintech Card Feed */}
+          {/* Mobile Native Card Feed */}
           <div className="space-y-3 sm:hidden">
             {filtered.map((m) => (
               <div
@@ -229,7 +183,7 @@ export const MembersListPage: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-bold text-slate-900 text-sm truncate">{m.fullName}</h3>
-                      <p className="font-mono text-[11px] text-slate-500">{m.memberCode} • {m.villageCity || 'India'}</p>
+                      <p className="font-mono text-[11px] text-slate-500">{m.memberCode}</p>
                     </div>
                   </div>
                   <Badge variant={getStatusBadgeVariant(m.status)} size="sm">
@@ -237,57 +191,36 @@ export const MembersListPage: React.FC = () => {
                   </Badge>
                 </div>
 
-                {/* Card Scheme & Monthly Contribution */}
-                <div className="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Scheme</span>
-                    <span className="font-semibold text-slate-800">{m.bhishiPlanName || 'General'}</span>
+                {/* Card Contact & Address */}
+                <div className="space-y-1.5 text-xs bg-slate-50 p-2.5 rounded-xl">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="font-semibold">{m.mobile}</span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Monthly Due</span>
-                    <span className="font-bold text-emerald-700 font-mono">₹{m.monthlyContribution.toLocaleString('en-IN')}</span>
+                  <div className="flex items-start gap-2 text-slate-600">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="truncate">{m.address}</span>
                   </div>
-                </div>
-
-                {/* Card Balances: Invested vs Loan */}
-                <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                  <div className="p-2 rounded-xl bg-emerald-50/60 border border-emerald-100">
-                    <span className="text-[10px] text-emerald-800 uppercase font-semibold block">Total Invested</span>
-                    <p className="font-bold font-mono text-emerald-900 mt-0.5">{formatCurrency(m.totalInvested)}</p>
-                  </div>
-
-                  <div className="p-2 rounded-xl bg-amber-50/60 border border-amber-100">
-                    <span className="text-[10px] text-amber-800 uppercase font-semibold block">Loan Outstanding</span>
-                    <p className="font-bold font-mono text-amber-900 mt-0.5">
-                      {m.outstandingLoan > 0 ? formatCurrency(m.outstandingLoan) : 'Nil'}
-                    </p>
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <CreditCard className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span className="font-mono font-medium">Aadhaar: {m.aadharNumber || m.idProofRef || '—'}</span>
                   </div>
                 </div>
 
-                {/* Card Action Row */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
-                  <a
-                    href={`tel:${m.mobile}`}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-600 p-1.5 rounded-lg"
+                {/* Card Bottom Actions */}
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setMemberToEdit(m)}
+                    className="px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer"
                   >
-                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{m.mobile}</span>
-                  </a>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => setMemberToEdit(m)}
-                      className="px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => navigate(`/members/${m.id}`)}
-                      className="px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg flex items-center gap-1 cursor-pointer"
-                    >
-                      Statement <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => navigate(`/members/${m.id}`)}
+                    className="px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg flex items-center gap-1 cursor-pointer"
+                  >
+                    Details <ChevronRight className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -299,11 +232,10 @@ export const MembersListPage: React.FC = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
                   <tr>
-                    <th className="py-3.5 px-6">Member Details</th>
-                    <th className="py-3.5 px-4">Contact & Location</th>
-                    <th className="py-3.5 px-4">Bhishi Plan</th>
-                    <th className="py-3.5 px-4 text-right">Total Invested</th>
-                    <th className="py-3.5 px-4 text-right">Loan Outstanding</th>
+                    <th className="py-3.5 px-6">Member Name</th>
+                    <th className="py-3.5 px-4">Phone Number</th>
+                    <th className="py-3.5 px-4">Address</th>
+                    <th className="py-3.5 px-4">Aadhaar Number</th>
                     <th className="py-3.5 px-4 text-center">Status</th>
                     <th className="py-3.5 px-6 text-right">Actions</th>
                   </tr>
@@ -328,27 +260,20 @@ export const MembersListPage: React.FC = () => {
                       </td>
 
                       <td className="py-4 px-4">
-                        <p className="font-medium text-slate-800">{m.mobile}</p>
-                        <p className="text-[11px] text-slate-500">{m.villageCity || 'Not specified'}</p>
-                      </td>
-
-                      <td className="py-4 px-4">
-                        <p className="font-semibold text-slate-800">{m.bhishiPlanName || 'General Account'}</p>
-                        <p className="text-[11px] text-emerald-700 font-mono">
-                          ₹{m.monthlyContribution.toLocaleString('en-IN')}/mo
+                        <p className="font-semibold text-slate-800 flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>{m.mobile}</span>
                         </p>
                       </td>
 
-                      <td className="py-4 px-4 text-right font-mono font-bold text-slate-900">
-                        {formatCurrency(m.totalInvested)}
+                      <td className="py-4 px-4 max-w-xs">
+                        <p className="text-slate-700 truncate" title={m.address}>
+                          {m.address}
+                        </p>
                       </td>
 
-                      <td className="py-4 px-4 text-right font-mono font-bold">
-                        {m.outstandingLoan > 0 ? (
-                          <span className="text-amber-700">{formatCurrency(m.outstandingLoan)}</span>
-                        ) : (
-                          <span className="text-slate-400 font-mono text-xs">Nil</span>
-                        )}
+                      <td className="py-4 px-4 font-mono font-medium text-slate-800">
+                        {m.aadharNumber || m.idProofRef || '—'}
                       </td>
 
                       <td className="py-4 px-4 text-center">
@@ -364,7 +289,7 @@ export const MembersListPage: React.FC = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => navigate(`/members/${m.id}`)}
-                            title="View Profile & Statement"
+                            title="View Profile"
                             className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
@@ -375,13 +300,6 @@ export const MembersListPage: React.FC = () => {
                             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleArchive(m)}
-                            title="Archive"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -394,19 +312,14 @@ export const MembersListPage: React.FC = () => {
         </>
       )}
 
-      {/* Add Member Modal */}
-      {isAddModalOpen && (
+      {/* Member Form Modal (Add / Edit) */}
+      {(isAddModalOpen || memberToEdit) && (
         <MemberFormModal
-          isOpen={true}
-          onClose={() => setIsAddModalOpen(false)}
-        />
-      )}
-
-      {/* Edit Member Modal */}
-      {memberToEdit && (
-        <MemberFormModal
-          isOpen={true}
-          onClose={() => setMemberToEdit(null)}
+          isOpen={Boolean(isAddModalOpen || memberToEdit)}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            setMemberToEdit(null);
+          }}
           memberToEdit={memberToEdit}
         />
       )}

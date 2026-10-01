@@ -66,57 +66,57 @@ export const CalculatorsPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-card">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-card">
         <div>
-          <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
             Financial Calculation Engines
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Simulate Bhishi maturities, generate loan amortization tables, and calculate compound returns
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab('bhishi')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
               activeTab === 'bhishi'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <Coins className="w-4 h-4" /> Bhishi Maturity
+            <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Bhishi Maturity
           </button>
 
           <button
             onClick={() => setActiveTab('loan')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
               activeTab === 'loan'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <CreditCard className="w-4 h-4" /> Loan EMI Schedule
+            <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Loan EMI
           </button>
 
           <button
             onClick={() => setActiveTab('interest')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
               activeTab === 'interest'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <Percent className="w-4 h-4" /> Yield Calculator
+            <Percent className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Yield
           </button>
         </div>
       </div>
 
       {/* 1. BHISHI MATURITY CALCULATOR */}
       {activeTab === 'bhishi' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-card space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 border-b pb-2">
               Bhishi Scheme Parameters
@@ -262,6 +262,7 @@ export const CalculatorsPage: React.FC = () => {
                 options={[
                   { value: 'flat', label: 'Flat Interest Rate (Simple Installments)' },
                   { value: 'reducing_balance', label: 'Reducing Balance (Standard Bank EMI)' },
+                  { value: 'interest_only', label: 'Interest-Only Monthly EMI (Principal at End)' },
                 ]}
               />
 
@@ -324,9 +325,27 @@ export const CalculatorsPage: React.FC = () => {
           </div>
 
           {/* Generated Amortization Schedule */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-card p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Simulated Amortization Schedule</h3>
-            <div className="overflow-x-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card p-4 sm:p-6 overflow-hidden">
+            <h3 className="text-sm font-bold text-slate-900 mb-3">Simulated Amortization Schedule</h3>
+
+            {/* Mobile Cards */}
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {schedule.map((inst) => (
+                <div key={inst.installmentNumber} className="py-2.5 space-y-1 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-900">Month {inst.installmentNumber}</span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">{formatCurrency(inst.totalInstallment)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500 text-[11px]">
+                    <span>Due: {formatDate(inst.dueDate)}</span>
+                    <span>Principal: {formatCurrency(inst.principalAmount)} • Interest: {formatCurrency(inst.interestAmount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
                   <tr>

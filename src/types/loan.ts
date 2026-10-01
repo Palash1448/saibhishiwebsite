@@ -1,8 +1,9 @@
 import { PaymentMethod } from './collection';
 
 export type LoanStatus = 'active' | 'closed' | 'defaulted' | 'settled';
-export type LoanCalculationMethod = 'flat' | 'reducing_balance';
-export type InstallmentStatus = 'upcoming' | 'due' | 'paid' | 'partial' | 'overdue';
+export type LoanCalculationMethod = 'flat' | 'reducing_balance' | 'interest_only';
+export type InstallmentStatus = 'upcoming' | 'due' | 'paid' | 'partial' | 'overdue' | 'interest_paid';
+export type LoanRepaymentType = 'full_emi' | 'interest_only' | 'custom' | 'principal_only';
 
 export interface LoanInstallment {
   installmentNumber: number;
@@ -30,11 +31,11 @@ export interface Loan {
   principalAmount: number; // e.g. ₹1,00,000
   monthlyInterestRate: number; // e.g. 2 (%) - manually configurable per loan
   annualInterestRate: number; // monthlyInterestRate * 12
-  calculationMethod: LoanCalculationMethod; // 'flat' | 'reducing_balance'
+  calculationMethod: LoanCalculationMethod; // 'flat' | 'reducing_balance' | 'interest_only'
   durationMonths: number; // e.g. 12
   numberOfInstallments: number;
   
-  monthlyInstallment: number; // calculated EMI
+  monthlyInstallment: number; // calculated EMI or monthly interest
   processingFee: number;
   totalInterest: number;
   totalPayable: number; // principal + interest + processingFee
@@ -66,8 +67,9 @@ export interface Loan {
 
 export interface LoanRepaymentPayload {
   loanId: string;
-  installmentNumbers: number[];
+  installmentNumbers?: number[];
   amount: number;
+  paymentType?: LoanRepaymentType; // 'full_emi' | 'interest_only' | 'custom' | 'principal_only'
   paymentDate: string;
   paymentMethod: PaymentMethod;
   referenceNumber?: string;

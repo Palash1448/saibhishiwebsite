@@ -55,16 +55,18 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-linear-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-sm shadow-xs shrink-0">
-            ₹
-          </div>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src="/logo.png"
+            alt="साई भिषी मंडळ"
+            className="w-8 h-8 rounded-full object-cover shrink-0 shadow-xs ring-1 ring-emerald-500/30"
+          />
           <div className="min-w-0">
             <h1 className="font-extrabold text-sm tracking-tight text-slate-900 truncate flex items-center gap-1.5">
-              SaiBhishi
+              साई भिषी मंडळ
               <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
             </h1>
-            <p className="text-[10px] text-slate-500 font-medium truncate">Admin Portal</p>
+            <p className="text-[10px] text-slate-500 font-medium truncate">SaiBhishi Admin Portal</p>
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <>
               <Cloud className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Firebase Live</span>
+              <span>Live Cloud</span>
             </>
           )}
         </div>

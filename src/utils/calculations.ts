@@ -12,6 +12,10 @@ export function roundToTwo(num: number): number {
  * Calculates Bhishi Maturity Amount and Total Interest Return.
  *
  * @param monthlyContribution Monthly installment (₹)
+/**
+ * Calculates Bhishi Maturity Amount and Total Interest Return.
+ *
+ * @param monthlyContribution Monthly installment (₹)
  * @param durationMonths Number of months
  * @param annualReturnRate Annual return percentage rate (e.g., 12 for 12%)
  * @param method Calculation method ('simple' | 'compounded_annual' | 'fixed_bonus' | 'flat_rate')
@@ -20,7 +24,8 @@ export interface BhishiMaturityResult {
   totalPrincipal: number;
   totalInterest: number;
   maturityAmount: number;
-  effectiveAnnualRate: number;
+  monthlyReturnRate: number; // % / month
+  effectiveAnnualRate: number; // % p.a.
   monthlyAverageInterest: number;
 }
 
@@ -35,31 +40,31 @@ export function calculateMaturityAmount(
       totalPrincipal: 0,
       totalInterest: 0,
       maturityAmount: 0,
+      monthlyReturnRate: 0,
       effectiveAnnualRate: 0,
       monthlyAverageInterest: 0,
     };
   }
 
   const totalPrincipal = roundToTwo(monthlyContribution * durationMonths);
+  const monthlyReturnRate = roundToTwo(annualReturnRate / 12);
   let totalInterest = 0;
 
   switch (method) {
     case 'simple': {
-      // Recurring deposit simple interest formula:
-      // I = P * (n * (n + 1) / (2 * 12)) * (r / 100)
-      // where P = monthly deposit, n = months, r = annual interest rate
-      const monthSumMonths = (durationMonths * (durationMonths + 1)) / 24;
-      totalInterest = (monthlyContribution * monthSumMonths * (annualReturnRate / 100));
+      // Monthly Recurring deposit formula:
+      // Interest = Deposit * (n * (n + 1) / 2) * (monthlyRate / 100)
+      const monthSum = (durationMonths * (durationMonths + 1)) / 2;
+      totalInterest = monthlyContribution * monthSum * (monthlyReturnRate / 100);
       break;
     }
 
     case 'compounded_annual': {
       // Compounded quarterly / annually RD formula standard
-      // Approximate iterative monthly accumulation with compounding
       let balance = 0;
-      const monthlyRate = (annualReturnRate / 100) / 12;
+      const mRate = monthlyReturnRate / 100;
       for (let m = 1; m <= durationMonths; m++) {
-        balance = (balance + monthlyContribution) * (1 + monthlyRate);
+        balance = (balance + monthlyContribution) * (1 + mRate);
       }
       totalInterest = balance - totalPrincipal;
       break;
@@ -88,6 +93,7 @@ export function calculateMaturityAmount(
     totalPrincipal,
     totalInterest,
     maturityAmount,
+    monthlyReturnRate,
     effectiveAnnualRate: annualReturnRate,
     monthlyAverageInterest,
   };
@@ -101,24 +107,155 @@ export function calculateInvestmentReturn(
   annualRate: number,
   periodMonths: number = 12,
   method: CalculationMethod = 'simple'
-): { interestAmount: number; totalReturn: number } {
+): { interestAmount: number; totalReturn: number; monthlyRate: number } {
   if (principalAmount <= 0 || annualRate <= 0) {
-    return { interestAmount: 0, totalReturn: principalAmount };
+    return { interestAmount: 0, totalReturn: principalAmount, monthlyRate: 0 };
   }
 
+  const monthlyRate = roundToTwo(annualRate / 12);
   const years = periodMonths / 12;
   let interest = 0;
 
   if (method === 'compounded_annual') {
     interest = principalAmount * Math.pow(1 + annualRate / 100, years) - principalAmount;
   } else {
-    interest = principalAmount * (annualRate / 100) * years;
+    // Monthly interest accumulation: Principal * (monthlyRate/100) * periodMonths
+    interest = principalAmount * (monthlyRate / 100) * periodMonths;
   }
 
   interest = roundToTwo(interest);
   return {
     interestAmount: interest,
     totalReturn: roundToTwo(principalAmount + interest),
+    monthlyRate,
+  };
+}
+
+export interface DepositInterestBreakdown {
+  collectionId: string;
+  monthYearLabel: string;
+  depositAmount: number;
+  paymentDate: string;
+  paymentDay: number;
+  cutoffDay: number;
+  isEligibleForMonth: boolean; // true if paymentDay <= cutoffDay
+  monthlyRate: number; // % / month
+  monthsEarned: number;
+  earnedInterest: number;
+  forfeitedInterestThisMonth: number;
+}
+
+export interface MemberCollectionsInterestResult {
+  totalPrincipal: number;
+  monthlyRate: number; // e.g. 1% / month
+  annualRate: number; // e.g. 12% p.a.
+  cutoffDay: number; // e.g. 10th
+  totalEarnedInterest: number;
+  totalForfeitedInterest: number;
+  onTimeCount: number;
+  lateCount: number;
+  breakdown: DepositInterestBreakdown[];
+}
+
+/**
+ * Evaluates monthly deposits against the cutoff date rule:
+ * - If invested ON or BEFORE cutoffDay (e.g. <= 10th): Earns interest for that deposit month.
+ * - If invested AFTER cutoffDay (e.g. > 10th): Does NOT earn interest for that month only (forfeited).
+ */
+export function calculateMemberCollectionsInterest(
+  collections: Array<{
+    id: string;
+    paidAmount?: number;
+    expectedAmount?: number;
+    paymentDate?: string;
+    dueDate?: string;
+    monthYearLabel?: string;
+    status?: string;
+  }>,
+  monthlyRate: number,
+  cutoffDay: number = 10,
+  totalPrincipalFallback: number = 0,
+  periodMonths: number = 12
+): MemberCollectionsInterestResult {
+  const annualRate = roundToTwo(monthlyRate * 12);
+  const paidCols = collections.filter((c) => c.status === 'paid' && (c.paidAmount || 0) > 0);
+
+  if (paidCols.length === 0) {
+    // If no collections recorded yet, use theoretical full principal
+    const theoreticalInterest = roundToTwo(totalPrincipalFallback * (monthlyRate / 100) * (periodMonths / 2));
+    return {
+      totalPrincipal: totalPrincipalFallback,
+      monthlyRate,
+      annualRate,
+      cutoffDay,
+      totalEarnedInterest: theoreticalInterest,
+      totalForfeitedInterest: 0,
+      onTimeCount: 0,
+      lateCount: 0,
+      breakdown: [],
+    };
+  }
+
+  const breakdown: DepositInterestBreakdown[] = [];
+  let totalPrincipal = 0;
+  let totalEarnedInterest = 0;
+  let totalForfeitedInterest = 0;
+  let onTimeCount = 0;
+  let lateCount = 0;
+
+  paidCols.forEach((col, idx) => {
+    const depositAmount = col.paidAmount || col.expectedAmount || 0;
+    totalPrincipal += depositAmount;
+
+    const dateStr = col.paymentDate || col.dueDate || new Date().toISOString().slice(0, 10);
+    const payDay = new Date(dateStr).getDate();
+    const isEligibleForMonth = payDay <= cutoffDay;
+
+    // Remaining months in scheme cycle (from current deposit to period end)
+    const remainingMonths = Math.max(1, periodMonths - idx);
+    const monthlyInterestOnDeposit = roundToTwo(depositAmount * (monthlyRate / 100));
+
+    let monthsEarned = remainingMonths;
+    let forfeitedThisMonth = 0;
+
+    if (isEligibleForMonth) {
+      onTimeCount++;
+    } else {
+      lateCount++;
+      // Forfeits interest for the deposit month only
+      monthsEarned = Math.max(0, remainingMonths - 1);
+      forfeitedThisMonth = monthlyInterestOnDeposit;
+      totalForfeitedInterest += forfeitedThisMonth;
+    }
+
+    const earned = roundToTwo(monthlyInterestOnDeposit * monthsEarned);
+    totalEarnedInterest += earned;
+
+    breakdown.push({
+      collectionId: col.id,
+      monthYearLabel: col.monthYearLabel || `Month ${idx + 1}`,
+      depositAmount,
+      paymentDate: dateStr,
+      paymentDay: payDay,
+      cutoffDay,
+      isEligibleForMonth,
+      monthlyRate,
+      monthsEarned,
+      earnedInterest: earned,
+      forfeitedInterestThisMonth: forfeitedThisMonth,
+    });
+  });
+
+  return {
+    totalPrincipal: roundToTwo(totalPrincipal),
+    monthlyRate,
+    annualRate,
+    cutoffDay,
+    totalEarnedInterest: roundToTwo(totalEarnedInterest),
+    totalForfeitedInterest: roundToTwo(totalForfeitedInterest),
+    onTimeCount,
+    lateCount,
+    breakdown,
   };
 }
 
@@ -175,6 +312,11 @@ export function calculateEMI(
     totalInterest = roundToTwo(principal * (monthlyInterestRate / 100) * durationMonths);
     const totalPayableWithoutFee = principal + totalInterest;
     monthlyInstallment = roundToTwo(totalPayableWithoutFee / durationMonths);
+  } else if (method === 'interest_only') {
+    // Interest-Only: Monthly payment covers only monthly interest (Principal repaid at bullet/end)
+    const monthlyInterest = roundToTwo(principal * (monthlyInterestRate / 100));
+    totalInterest = roundToTwo(monthlyInterest * durationMonths);
+    monthlyInstallment = monthlyInterest;
   } else {
     // Reducing Balance Method (standard Amortization formula)
     // EMI = [P x r x (1+r)^n] / [(1+r)^n - 1]
@@ -221,7 +363,29 @@ export function generateRepaymentSchedule(
   const installments: LoanInstallment[] = [];
   const baseDate = new Date(startDate || new Date().toISOString().slice(0, 10));
 
-  if (method === 'flat') {
+  if (method === 'interest_only') {
+    const monthlyInterest = roundToTwo(principal * (monthlyInterestRate / 100));
+
+    for (let i = 1; i <= durationMonths; i++) {
+      const dueDate = new Date(baseDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+
+      const isLast = i === durationMonths;
+      const principalPart = isLast ? principal : 0;
+      const totalEMI = roundToTwo(principalPart + monthlyInterest);
+
+      installments.push({
+        installmentNumber: i,
+        dueDate: dueDate.toISOString().slice(0, 10),
+        principalAmount: principalPart,
+        interestAmount: monthlyInterest,
+        totalInstallment: totalEMI,
+        paidAmount: 0,
+        remainingAmount: totalEMI,
+        status: i === 1 ? 'due' : 'upcoming',
+      });
+    }
+  } else if (method === 'flat') {
     const monthlyPrincipal = roundToTwo(principal / durationMonths);
     const monthlyInterest = roundToTwo(principal * (monthlyInterestRate / 100));
     const totalEMI = roundToTwo(monthlyPrincipal + monthlyInterest);

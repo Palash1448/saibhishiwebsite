@@ -117,24 +117,26 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-card">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-card">
         <div>
-          <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
-            Financial Statements & Reports Center
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
+            Financial Reports & Statements
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Generate printable audit reports, cash flow summaries, profit statements, and customer financial history
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Audit reports, cash flow summaries, profit statements, and customer statements
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 no-print">
+        <div className="flex items-center gap-2 no-print">
           <Button
             variant="outline"
             size="sm"
             leftIcon={<Printer className="w-4 h-4" />}
             onClick={handlePrint}
+            className="flex-1 sm:flex-none justify-center"
           >
-            Print Report
+            Print
           </Button>
 
           <Button
@@ -142,16 +144,39 @@ export const ReportsPage: React.FC = () => {
             size="sm"
             leftIcon={<Download className="w-4 h-4" />}
             onClick={handleExportCSV}
+            className="flex-1 sm:flex-none justify-center"
           >
             Export CSV
           </Button>
         </div>
       </div>
 
-      {/* Report Selection Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Side: Report Categories Navigation */}
-        <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-card space-y-1.5 no-print">
+      {/* Mobile Horizontal Report Selector */}
+      <div className="md:hidden bg-white p-3 rounded-2xl border border-slate-100 shadow-xs no-print">
+        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">
+          Select Statement / Report:
+        </label>
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {reportsList.map((rep) => (
+            <button
+              key={rep.id}
+              onClick={() => setSelectedReport(rep.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer whitespace-nowrap ${
+                selectedReport === rep.id
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {rep.title.replace(/^\d+\.\s*/, '')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Report Layout Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        {/* Desktop Left Side: Report Categories Navigation */}
+        <div className="hidden md:block bg-white p-4 rounded-3xl border border-slate-100 shadow-card space-y-1.5 no-print">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">
             Select Report Type
           </p>
@@ -174,21 +199,21 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         {/* Right Side: Report Canvas / Content */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-4 sm:space-y-6">
           {/* Printable Report Canvas */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-card">
+          <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-card">
             {/* Header for print / official view */}
-            <div className="border-b-2 border-slate-900 pb-4 mb-6">
+            <div className="border-b-2 border-slate-900 pb-4 mb-5">
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-xl font-extrabold text-slate-900 uppercase font-display">
+                  <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 uppercase font-display">
                     {businessSettings.businessName}
                   </h2>
                   <p className="text-xs text-slate-600 font-medium">
                     {reportsList.find((r) => r.id === selectedReport)?.title}
                   </p>
                 </div>
-                <div className="text-right text-xs text-slate-500">
+                <div className="text-right text-[11px] sm:text-xs text-slate-500">
                   <p>Generated: {formatDate(new Date().toISOString().slice(0, 10))}</p>
                   <p>Period: {formatDate(startDate)} to {formatDate(endDate)}</p>
                 </div>
@@ -198,146 +223,150 @@ export const ReportsPage: React.FC = () => {
             {/* REPORT 1: Monthly Collection Report */}
             {selectedReport === 'monthly_collection' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl text-center text-xs">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl text-center text-xs">
                   <div>
-                    <span className="text-slate-500 font-medium">Expected Total</span>
-                    <p className="text-base font-bold font-mono text-slate-900 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + b.expectedAmount, 0))}</p>
+                    <span className="text-slate-500 text-[10px] sm:text-xs font-medium block">Expected</span>
+                    <p className="text-xs sm:text-base font-bold font-mono text-slate-900 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + b.expectedAmount, 0))}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500 font-medium">Collected Total</span>
-                    <p className="text-base font-bold font-mono text-emerald-700 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + (b.paidAmount || 0), 0))}</p>
+                    <span className="text-slate-500 text-[10px] sm:text-xs font-medium block">Collected</span>
+                    <p className="text-xs sm:text-base font-bold font-mono text-emerald-700 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + (b.paidAmount || 0), 0))}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500 font-medium">Uncollected Dues</span>
-                    <p className="text-base font-bold font-mono text-amber-700 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + (b.remainingAmount || 0), 0))}</p>
+                    <span className="text-slate-500 text-[10px] sm:text-xs font-medium block">Pending</span>
+                    <p className="text-xs sm:text-base font-bold font-mono text-amber-700 mt-0.5">{formatCurrency(collections.reduce((a, b) => a + (b.remainingAmount || 0), 0))}</p>
                   </div>
                 </div>
 
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
-                    <tr>
-                      <th className="py-2.5 px-3">Member</th>
-                      <th className="py-2.5 px-3">Month</th>
-                      <th className="py-2.5 px-3 text-right">Expected</th>
-                      <th className="py-2.5 px-3 text-right">Paid</th>
-                      <th className="py-2.5 px-3 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {collections.slice(0, 15).map((c) => (
-                      <tr key={c.id}>
-                        <td className="py-2.5 px-3 font-semibold">{c.memberName}</td>
-                        <td className="py-2.5 px-3">{c.monthYearLabel}</td>
-                        <td className="py-2.5 px-3 text-right font-mono">{formatCurrency(c.expectedAmount)}</td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">{formatCurrency(c.paidAmount)}</td>
-                        <td className="py-2.5 px-3 text-center">
-                          <Badge variant={getStatusBadgeVariant(c.status)} size="sm">{c.status}</Badge>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
+                      <tr>
+                        <th className="py-2.5 px-3">Member</th>
+                        <th className="py-2.5 px-3">Month</th>
+                        <th className="py-2.5 px-3 text-right">Expected</th>
+                        <th className="py-2.5 px-3 text-right">Paid</th>
+                        <th className="py-2.5 px-3 text-center">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y">
+                      {collections.slice(0, 15).map((c) => (
+                        <tr key={c.id}>
+                          <td className="py-2.5 px-3 font-semibold">{c.memberName}</td>
+                          <td className="py-2.5 px-3">{c.monthYearLabel}</td>
+                          <td className="py-2.5 px-3 text-right font-mono">{formatCurrency(c.expectedAmount)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">{formatCurrency(c.paidAmount)}</td>
+                          <td className="py-2.5 px-3 text-center">
+                            <Badge variant={getStatusBadgeVariant(c.status)} size="sm">{c.status}</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
             {/* REPORT 2: Member Investment Summary */}
             {selectedReport === 'member_investment' && (
               <div className="space-y-4">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
-                    <tr>
-                      <th className="py-2.5 px-3">Member</th>
-                      <th className="py-2.5 px-3">Plan</th>
-                      <th className="py-2.5 px-3 text-right">Total Invested</th>
-                      <th className="py-2.5 px-3 text-right">Returns Earned</th>
-                      <th className="py-2.5 px-3 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {members.map((m) => (
-                      <tr key={m.id}>
-                        <td className="py-2.5 px-3 font-bold">{m.fullName} ({m.memberCode})</td>
-                        <td className="py-2.5 px-3">{m.bhishiPlanName || 'Standard'}</td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">{formatCurrency(m.totalInvested)}</td>
-                        <td className="py-2.5 px-3 text-right font-mono font-semibold text-purple-700">+{formatCurrency(m.totalReturns)}</td>
-                        <td className="py-2.5 px-3 text-center">
-                          <Badge variant={getStatusBadgeVariant(m.status)} size="sm">{m.status}</Badge>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
+                      <tr>
+                        <th className="py-2.5 px-3">Member</th>
+                        <th className="py-2.5 px-3">Plan</th>
+                        <th className="py-2.5 px-3 text-right">Total Invested</th>
+                        <th className="py-2.5 px-3 text-right">Returns Earned</th>
+                        <th className="py-2.5 px-3 text-center">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y">
+                      {members.map((m) => (
+                        <tr key={m.id}>
+                          <td className="py-2.5 px-3 font-bold">{m.fullName} ({m.memberCode})</td>
+                          <td className="py-2.5 px-3">{m.bhishiPlanName || 'Standard'}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">{formatCurrency(m.totalInvested)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-purple-700">+{formatCurrency(m.totalReturns)}</td>
+                          <td className="py-2.5 px-3 text-center">
+                            <Badge variant={getStatusBadgeVariant(m.status)} size="sm">{m.status}</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
             {/* REPORT 7: Cash Flow Statement */}
             {selectedReport === 'cash_flow' && (
-              <div className="space-y-6 text-xs">
+              <div className="space-y-4 sm:space-y-6 text-xs">
                 {/* Inflow Section */}
-                <div className="border border-emerald-200 rounded-2xl p-4 bg-emerald-50/40">
-                  <h4 className="font-bold text-emerald-900 uppercase tracking-wider text-xs mb-3">
+                <div className="border border-emerald-200 rounded-2xl p-3.5 sm:p-4 bg-emerald-50/40">
+                  <h4 className="font-bold text-emerald-900 uppercase tracking-wider text-xs mb-2.5">
                     A. Cash Inflows (+)
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Monthly Bhishi Collections:</span>
+                      <span className="text-slate-600">Bhishi Collections:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.inflow.bhishiCollections)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Loan Principal Recovery:</span>
+                      <span className="text-slate-600">Loan Principal Recovery:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.inflow.loanPrincipalRecovered)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Loan Interest Collected:</span>
+                      <span className="text-slate-600">Loan Interest Collected:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.inflow.loanInterestCollected)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Loan Processing Fees:</span>
+                      <span className="text-slate-600">Loan Processing Fees:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.inflow.processingFees)}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-emerald-300 font-bold text-emerald-950 text-sm">
-                      <span>Total Operating Inflow:</span>
+                      <span>Total Inflow:</span>
                       <span className="font-mono">{formatCurrency(cashflow.inflow.totalInflow)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Outflow Section */}
-                <div className="border border-rose-200 rounded-2xl p-4 bg-rose-50/40">
-                  <h4 className="font-bold text-rose-900 uppercase tracking-wider text-xs mb-3">
+                <div className="border border-rose-200 rounded-2xl p-3.5 sm:p-4 bg-rose-50/40">
+                  <h4 className="font-bold text-rose-900 uppercase tracking-wider text-xs mb-2.5">
                     B. Cash Outflows (-)
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Loan Disbursements:</span>
+                      <span className="text-slate-600">Loan Disbursements:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.outflow.loanDisbursements)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Bhishi Payouts & Withdrawals:</span>
+                      <span className="text-slate-600">Bhishi Payouts & Returns:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.outflow.bhishiMaturityPayouts)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Operating Expenses (Rent, Salary, Bills):</span>
+                      <span className="text-slate-600">Operating Expenses:</span>
                       <span className="font-mono font-bold">{formatCurrency(cashflow.outflow.operatingExpenses)}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-rose-300 font-bold text-rose-950 text-sm">
-                      <span>Total Cash Outflow:</span>
+                      <span>Total Outflow:</span>
                       <span className="font-mono">{formatCurrency(cashflow.outflow.totalOutflow)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Net Balance */}
-                <div className="bg-slate-900 text-white p-4 rounded-2xl flex justify-between items-center text-sm font-bold">
-                  <span>Net Cash Position (Inflow - Outflow):</span>
-                  <span className="text-xl font-mono text-emerald-400 font-extrabold">{formatCurrency(cashflow.netCashFlow)}</span>
+                <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-2xl flex justify-between items-center text-xs sm:text-sm font-bold">
+                  <span>Net Position:</span>
+                  <span className="text-lg sm:text-xl font-mono text-emerald-400 font-extrabold">{formatCurrency(cashflow.netCashFlow)}</span>
                 </div>
               </div>
             )}
 
             {/* REPORT 9: Comprehensive Member Statement */}
             {selectedReport === 'member_statement' && (
-              <div className="space-y-5">
+              <div className="space-y-4 sm:space-y-5">
                 <div className="no-print mb-3">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                     Select Member for Statement
@@ -349,7 +378,7 @@ export const ReportsPage: React.FC = () => {
                   >
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.fullName} ({m.memberCode}) — {m.villageCity || ''}
+                        {m.fullName} ({m.memberCode})
                       </option>
                     ))}
                   </select>
@@ -357,50 +386,52 @@ export const ReportsPage: React.FC = () => {
 
                 {memberStatement && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl text-center text-xs">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl text-center text-xs">
                       <div>
-                        <span className="text-slate-400 font-semibold">Total Invested</span>
-                        <p className="text-base font-bold font-mono text-emerald-700 mt-0.5">{formatCurrency(memberStatement.totalInvested)}</p>
+                        <span className="text-slate-400 font-semibold text-[10px]">Invested</span>
+                        <p className="text-xs sm:text-base font-bold font-mono text-emerald-700 mt-0.5">{formatCurrency(memberStatement.totalInvested)}</p>
                       </div>
                       <div>
-                        <span className="text-slate-400 font-semibold">Interest Returns</span>
-                        <p className="text-base font-bold font-mono text-purple-700 mt-0.5">+{formatCurrency(memberStatement.totalReturns)}</p>
+                        <span className="text-slate-400 font-semibold text-[10px]">Returns</span>
+                        <p className="text-xs sm:text-base font-bold font-mono text-purple-700 mt-0.5">+{formatCurrency(memberStatement.totalReturns)}</p>
                       </div>
                       <div>
-                        <span className="text-slate-400 font-semibold">Loans Taken</span>
-                        <p className="text-base font-bold font-mono text-slate-900 mt-0.5">{formatCurrency(memberStatement.totalLoansTaken)}</p>
+                        <span className="text-slate-400 font-semibold text-[10px]">Loans Taken</span>
+                        <p className="text-xs sm:text-base font-bold font-mono text-slate-900 mt-0.5">{formatCurrency(memberStatement.totalLoansTaken)}</p>
                       </div>
                       <div>
-                        <span className="text-slate-400 font-semibold">Outstanding Loan</span>
-                        <p className="text-base font-bold font-mono text-amber-700 mt-0.5">{formatCurrency(memberStatement.currentOutstandingBalance)}</p>
+                        <span className="text-slate-400 font-semibold text-[10px]">Outstanding</span>
+                        <p className="text-xs sm:text-base font-bold font-mono text-amber-700 mt-0.5">{formatCurrency(memberStatement.currentOutstandingBalance)}</p>
                       </div>
                     </div>
 
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 pt-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 pt-1">
                       Transaction Ledger History
                     </h4>
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
-                        <tr>
-                          <th className="py-2.5 px-3">Date</th>
-                          <th className="py-2.5 px-3">Txn #</th>
-                          <th className="py-2.5 px-3">Type</th>
-                          <th className="py-2.5 px-3 text-right">Amount (₹)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {memberStatement.transactions.map((t) => (
-                          <tr key={t.id}>
-                            <td className="py-2.5 px-3 text-slate-600">{formatDate(t.date)}</td>
-                            <td className="py-2.5 px-3 font-mono font-bold">#{t.transactionNumber}</td>
-                            <td className="py-2.5 px-3">{t.type}</td>
-                            <td className={`py-2.5 px-3 text-right font-mono font-bold ${t.category === 'inflow' ? 'text-emerald-700' : 'text-rose-600'}`}>
-                              {t.category === 'inflow' ? '+' : '-'}{formatCurrency(t.amount)}
-                            </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
+                          <tr>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Txn #</th>
+                            <th className="py-2.5 px-3">Type</th>
+                            <th className="py-2.5 px-3 text-right">Amount (₹)</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y">
+                          {memberStatement.transactions.map((t) => (
+                            <tr key={t.id}>
+                              <td className="py-2.5 px-3 text-slate-600">{formatDate(t.date)}</td>
+                              <td className="py-2.5 px-3 font-mono font-bold">#{t.transactionNumber}</td>
+                              <td className="py-2.5 px-3">{t.type}</td>
+                              <td className={`py-2.5 px-3 text-right font-mono font-bold ${t.category === 'inflow' ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                {t.category === 'inflow' ? '+' : '-'}{formatCurrency(t.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -409,26 +440,28 @@ export const ReportsPage: React.FC = () => {
             {/* Other generic reports display fallback */}
             {selectedReport !== 'monthly_collection' && selectedReport !== 'member_investment' && selectedReport !== 'cash_flow' && selectedReport !== 'member_statement' && (
               <div className="space-y-4">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
-                    <tr>
-                      <th className="py-2.5 px-3">Account / Txn #</th>
-                      <th className="py-2.5 px-3">Member</th>
-                      <th className="py-2.5 px-3">Particulars</th>
-                      <th className="py-2.5 px-3 text-right">Amount (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {transactions.slice(0, 12).map((t) => (
-                      <tr key={t.id}>
-                        <td className="py-2.5 px-3 font-mono font-bold">#{t.transactionNumber}</td>
-                        <td className="py-2.5 px-3">{t.memberName || 'General'}</td>
-                        <td className="py-2.5 px-3">{t.type}</td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold">{formatCurrency(t.amount)}</td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
+                      <tr>
+                        <th className="py-2.5 px-3">Txn #</th>
+                        <th className="py-2.5 px-3">Member</th>
+                        <th className="py-2.5 px-3">Type</th>
+                        <th className="py-2.5 px-3 text-right">Amount (₹)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y">
+                      {transactions.slice(0, 12).map((t) => (
+                        <tr key={t.id}>
+                          <td className="py-2.5 px-3 font-mono font-bold">#{t.transactionNumber}</td>
+                          <td className="py-2.5 px-3">{t.memberName || 'General'}</td>
+                          <td className="py-2.5 px-3">{t.type}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold">{formatCurrency(t.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

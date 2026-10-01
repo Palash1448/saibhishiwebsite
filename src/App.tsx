@@ -36,19 +36,19 @@ import { SettingsPage } from './pages/SettingsPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
-// Protected Route Wrapper
+import { SplashScreen } from './components/common/SplashScreen';
+
+// Loading / Splash Screen Component
+const AuthLoadingScreen: React.FC = () => (
+  <SplashScreen minDuration={1800} />
+);
+
+// Protected Route Wrapper - Requires Authenticated Firebase Admin
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="w-12 h-12 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-semibold tracking-wide">Authenticating SaiBhishi Admin Session...</p>
-        </div>
-      </div>
-    );
+    return <AuthLoadingScreen />;
   }
 
   if (!user) {
@@ -58,63 +58,104 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Public Only Route Wrapper - Redirects logged-in users to Dashboard
+const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 export function App() {
+  const [showInitialSplash, setShowInitialSplash] = React.useState(() => {
+    // Only show once per tab session or fresh load
+    return !sessionStorage.getItem('saibhishi_splash_shown');
+  });
+
+  const handleSplashFinish = () => {
+    sessionStorage.setItem('saibhishi_splash_shown', 'true');
+    setShowInitialSplash(false);
+  };
+
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <ConfirmationProvider>
-            <DataProvider>
-              <Routes>
-                {/* Public Authentication Route */}
-                <Route path="/login" element={<LoginPage />} />
+    <>
+      {showInitialSplash && (
+        <SplashScreen
+          minDuration={2200}
+          showSkip={true}
+          onFinish={handleSplashFinish}
+        />
+      )}
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <ConfirmationProvider>
+              <DataProvider>
+                <Routes>
+                  {/* Public Authentication Route */}
+                  <Route
+                    path="/login"
+                    element={
+                      <PublicOnlyRoute>
+                        <LoginPage />
+                      </PublicOnlyRoute>
+                    }
+                  />
 
-                {/* Protected Admin Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<DashboardPage />} />
+                  {/* Protected Admin Routes */}
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<DashboardPage />} />
 
-                  {/* Members */}
-                  <Route path="members" element={<MembersListPage />} />
-                  <Route path="members/add" element={<AddMemberPage />} />
-                  <Route path="members/:id" element={<MemberProfilePage />} />
+                    {/* Members */}
+                    <Route path="members" element={<MembersListPage />} />
+                    <Route path="members/add" element={<AddMemberPage />} />
+                    <Route path="members/:id" element={<MemberProfilePage />} />
 
-                  {/* Bhishi / Investments */}
-                  <Route path="bhishi/plans" element={<BhishiPlansPage />} />
-                  <Route path="bhishi/memberships" element={<BhishiMembershipsPage />} />
-                  <Route path="bhishi/collections" element={<MonthlyCollectionsPage />} />
-                  <Route path="bhishi/returns" element={<ReturnsInterestPage />} />
+                    {/* Bhishi / Investments */}
+                    <Route path="bhishi/plans" element={<BhishiPlansPage />} />
+                    <Route path="bhishi/memberships" element={<BhishiMembershipsPage />} />
+                    <Route path="bhishi/collections" element={<MonthlyCollectionsPage />} />
+                    <Route path="bhishi/returns" element={<ReturnsInterestPage />} />
 
-                  {/* Loans */}
-                  <Route path="loans" element={<LoansListPage />} />
-                  <Route path="loans/issue" element={<IssueLoanPage />} />
-                  <Route path="loans/repayments" element={<LoanRepaymentsPage />} />
-                  <Route path="loans/outstanding" element={<OutstandingLoansPage />} />
-                  <Route path="loans/:id" element={<LoanDetailPage />} />
+                    {/* Loans */}
+                    <Route path="loans" element={<LoansListPage />} />
+                    <Route path="loans/issue" element={<IssueLoanPage />} />
+                    <Route path="loans/repayments" element={<LoanRepaymentsPage />} />
+                    <Route path="loans/outstanding" element={<OutstandingLoansPage />} />
+                    <Route path="loans/:id" element={<LoanDetailPage />} />
 
-                  {/* Core Ledger & Business Modules */}
-                  <Route path="transactions" element={<TransactionsPage />} />
-                  <Route path="expenses" element={<ExpensesPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="calculators" element={<CalculatorsPage />} />
-                  <Route path="audit-logs" element={<AuditLogsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Route>
+                    {/* Core Ledger & Business Modules */}
+                    <Route path="transactions" element={<TransactionsPage />} />
+                    <Route path="expenses" element={<ExpensesPage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="calculators" element={<CalculatorsPage />} />
+                    <Route path="audit-logs" element={<AuditLogsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Route>
 
-                {/* 404 Route */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </DataProvider>
-          </ConfirmationProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+                  {/* 404 Route */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </DataProvider>
+            </ConfirmationProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </>
   );
 }
 

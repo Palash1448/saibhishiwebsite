@@ -15,7 +15,6 @@ import { getAllTransactions } from '../services/transactionService';
 import { getAllExpenses, computeExpenseSummary } from '../services/expenseService';
 import { getAllInterestRecords } from '../services/interestService';
 import { getBusinessSettings, getFinanceSettings, getAuditLogs } from '../services/settingsService';
-import { seedInitialDataIfEmpty, getInitialDemoData } from '../services/seedService';
 import { DEFAULT_BUSINESS_SETTINGS, DEFAULT_FINANCE_SETTINGS } from '../constants/defaultSettings';
 
 export interface FinancialStats {
@@ -46,11 +45,11 @@ interface DataContextType {
   businessSettings: BusinessSettings;
   financeSettings: FinanceSettings;
   auditLogs: AuditLog[];
-  
+
   stats: FinancialStats;
   collectionSummary: CollectionSummary;
   expenseSummary: ExpenseSummary;
-  
+
   loading: boolean;
   refreshAll: () => Promise<void>;
   resetToSampleData: () => void;
@@ -77,9 +76,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Ensure initial demo data exists in local storage if empty
-      seedInitialDataIfEmpty();
-
       const [
         membersData,
         plansData,
@@ -115,7 +111,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFinanceSettings(finData);
       setAuditLogs(logsData);
     } catch (err) {
-      console.error('Error loading financial state:', err);
+      console.error('Error loading Firestore database state:', err);
     } finally {
       setLoading(false);
     }
@@ -126,15 +122,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadData]);
 
   const resetToSampleData = () => {
-    const demo = getInitialDemoData();
-    localStorage.setItem('saibhishi_members', JSON.stringify(demo.members));
-    localStorage.setItem('saibhishi_bhishiPlans', JSON.stringify(demo.plans));
-    localStorage.setItem('saibhishi_monthlyCollections', JSON.stringify(demo.collections));
-    localStorage.setItem('saibhishi_loans', JSON.stringify(demo.loans));
-    localStorage.setItem('saibhishi_expenses', JSON.stringify(demo.expenses));
-    localStorage.setItem('saibhishi_transactions', JSON.stringify(demo.transactions));
-    localStorage.setItem('saibhishi_interestRecords', JSON.stringify(demo.interestRecords));
-    localStorage.setItem('saibhishi_auditLogs', JSON.stringify(demo.auditLogs));
+    // Clear all local caches and reload cleanly from Firestore
+    localStorage.removeItem('saibhishi_members');
+    localStorage.removeItem('saibhishi_bhishiPlans');
+    localStorage.removeItem('saibhishi_monthlyCollections');
+    localStorage.removeItem('saibhishi_loans');
+    localStorage.removeItem('saibhishi_expenses');
+    localStorage.removeItem('saibhishi_transactions');
+    localStorage.removeItem('saibhishi_interestRecords');
+    localStorage.removeItem('saibhishi_auditLogs');
     loadData();
   };
 

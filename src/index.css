@@ -111,8 +111,23 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .animate-slide-up-sheet {
   animation: slideUpBottom 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-drawer {
+  animation: slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in {
@@ -144,3 +159,73 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+/* Splash Screen Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.85;
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes ringSpinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ringSpinReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.animate-float-gentle {
+  animation: floatGentle 3.5s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: ringSpinSlow 16s linear infinite;
+}
+
+.animate-spin-reverse-slow {
+  animation: ringSpinReverse 22s linear infinite;
+}
+
+.animate-text-shimmer {
+  background-size: 200% auto;
+  animation: textShimmer 4s linear infinite;
+}
+

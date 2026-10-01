@@ -1,7 +1,8 @@
 import { InterestRecord } from '../types/bhishi';
 import { Member } from '../types/member';
+import { MonthlyCollection } from '../types/collection';
 import { fetchCollection, fetchDocById, saveDoc } from '../firebase/firestore';
-import { calculateInvestmentReturn } from '../utils/calculations';
+import { calculateMemberCollectionsInterest, MemberCollectionsInterestResult } from '../utils/calculations';
 import { recordTransaction } from './transactionService';
 import { getMemberById, updateMember } from './memberService';
 import { logAuditEvent } from './settingsService';
@@ -15,14 +16,23 @@ export async function getAllInterestRecords(): Promise<InterestRecord[]> {
 
 export async function previewMemberInterest(
   member: Member,
-  annualRate: number,
-  periodLabel: string,
-  adjustmentAmount: number = 0
-): Promise<InterestRecord> {
-  const calc = calculateInvestmentReturn(member.totalInvested || 0, annualRate, 12, 'simple');
-  const finalInterestAmount = Math.max(0, calc.interestAmount + adjustmentAmount);
+  monthlyRate: number,
+  cutoffDay: number = 10,
+  periodLabel: string = 'FY 2025-2026 (Monthly Calculated)',
+  adjustmentAmount: number = 0,
+  memberCollections: MonthlyCollection[] = []
+): Promise<{ record: InterestRecord; calculation: MemberCollectionsInterestResult }> {
+  const calculation = calculateMemberCollectionsInterest(
+    memberCollections,
+    monthlyRate,
+    cutoffDay,
+    member.totalInvested || 0,
+    12
+  );
 
-  return {
+  const finalInterestAmount = Math.max(0, calculation.totalEarnedInterest + adjustmentAmount);
+
+  const record: InterestRecord = {
     id: `INT-PREVIEW-${member.id}-${Date.now()}`,
     memberId: member.id,
     memberName: member.fullName,
@@ -30,9 +40,14 @@ export async function previewMemberInterest(
     planId: member.bhishiPlanId,
     planName: member.bhishiPlanName,
     calculationPeriod: periodLabel,
-    principalAmount: member.totalInvested || 0,
-    annualRate,
-    calculatedInterest: calc.interestAmount,
+    principalAmount: calculation.totalPrincipal,
+    monthlyRate: calculation.monthlyRate,
+    annualRate: calculation.annualRate,
+    interestCutoffDay: cutoffDay,
+    onTimeDepositsCount: calculation.onTimeCount,
+    lateDepositsCount: calculation.lateCount,
+    forfeitedInterestAmount: calculation.totalForfeitedInterest,
+    calculatedInterest: calculation.totalEarnedInterest,
     adjustmentAmount,
     finalInterestAmount,
     creditedDate: new Date().toISOString().slice(0, 10),
@@ -40,6 +55,8 @@ export async function previewMemberInterest(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+
+  return { record, calculation };
 }
 
 export async function creditInterestToMember(

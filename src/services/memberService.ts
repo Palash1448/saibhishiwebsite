@@ -122,8 +122,9 @@ export function filterMembers(members: Member[], options: MemberFilterOptions): 
         m.fullName.toLowerCase().includes(q) ||
         m.memberCode.toLowerCase().includes(q) ||
         m.mobile.includes(q) ||
-        (m.villageCity && m.villageCity.toLowerCase().includes(q)) ||
-        (m.bhishiPlanName && m.bhishiPlanName.toLowerCase().includes(q))
+        (m.address && m.address.toLowerCase().includes(q)) ||
+        (m.aadharNumber && m.aadharNumber.toLowerCase().includes(q)) ||
+        (m.idProofRef && m.idProofRef.toLowerCase().includes(q))
     );
   }
 

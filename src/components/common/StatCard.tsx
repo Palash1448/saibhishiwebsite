@@ -36,24 +36,24 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl bg-white p-5 md:p-6 border border-slate-100/80 shadow-card transition-all duration-200 hover:shadow-card-hover ${
+      className={`relative overflow-hidden rounded-2xl bg-white p-3.5 sm:p-5 md:p-6 border border-slate-100 shadow-card transition-all duration-200 hover:shadow-card-hover active:scale-[0.99] ${
         onClick ? 'cursor-pointer hover:border-emerald-200' : ''
       } ${className}`}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 truncate">
             {title}
           </p>
-          <h3 className="mt-2 text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight truncate">
+          <h3 className="mt-1 sm:mt-2 text-base sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight truncate font-mono">
             {displayValue}
           </h3>
 
           {(subtitle || trend) && (
-            <div className="mt-2 flex items-center gap-2 text-xs flex-wrap">
+            <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs flex-wrap">
               {trend && (
                 <span
-                  className={`font-semibold px-2 py-0.5 rounded-md ${
+                  className={`font-semibold px-1.5 py-0.5 rounded-md text-[10px] ${
                     trend.isPositive
                       ? 'bg-emerald-50 text-emerald-700'
                       : 'bg-rose-50 text-rose-700'
@@ -67,10 +67,11 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
 
-        <div className={`p-3.5 rounded-2xl shrink-0 ${iconBgColor} ${iconColor}`}>
-          <Icon className="w-6 h-6" />
+        <div className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl shrink-0 ${iconBgColor} ${iconColor}`}>
+          <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
         </div>
       </div>
     </div>
   );
 };
+

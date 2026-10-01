@@ -162,53 +162,86 @@ export async function recordLoanRepayment(
   if (!loan) throw new Error('Loan not found');
 
   const receiptNumber = generateReceiptNumber('LN-REC');
+  const isInterestOnly = repayment.paymentType === 'interest_only';
   let amountToDistribute = repayment.amount;
   const updatedInstallments = [...loan.installments];
 
   let principalRepaidThisSession = 0;
   let interestRepaidThisSession = 0;
 
-  for (let i = 0; i < updatedInstallments.length && amountToDistribute > 0; i++) {
-    const inst = updatedInstallments[i];
-    if (inst.status === 'paid') continue;
+  if (isInterestOnly) {
+    // 100% of repayment goes towards interest
+    interestRepaidThisSession = repayment.amount;
+    principalRepaidThisSession = 0;
 
-    const remainingOnInst = inst.remainingAmount;
-    if (amountToDistribute >= remainingOnInst) {
-      // Full payment of this installment
-      const unPaidRatio = inst.totalInstallment > 0 ? remainingOnInst / inst.totalInstallment : 1;
-      principalRepaidThisSession += inst.principalAmount * unPaidRatio;
-      interestRepaidThisSession += inst.interestAmount * unPaidRatio;
+    for (let i = 0; i < updatedInstallments.length && amountToDistribute > 0; i++) {
+      const inst = updatedInstallments[i];
+      if (inst.status === 'paid') continue;
 
-      inst.paidAmount += remainingOnInst;
-      inst.remainingAmount = 0;
-      inst.status = 'paid';
+      const instInterestRemaining = Math.max(0, inst.interestAmount - (inst.status === 'interest_paid' ? inst.interestAmount : 0));
+      const payAmount = Math.min(amountToDistribute, instInterestRemaining > 0 ? instInterestRemaining : amountToDistribute);
+
+      inst.paidAmount += payAmount;
+      inst.remainingAmount = Math.max(0, inst.remainingAmount - payAmount);
+      inst.status = inst.remainingAmount === 0 ? 'paid' : 'interest_paid';
       inst.paidDate = repayment.paymentDate;
       inst.paymentMethod = repayment.paymentMethod;
       inst.referenceNumber = repayment.referenceNumber;
       inst.receiptNumber = receiptNumber;
 
-      amountToDistribute -= remainingOnInst;
-    } else {
-      // Partial payment
-      const unPaidRatio = inst.totalInstallment > 0 ? amountToDistribute / inst.totalInstallment : 1;
-      principalRepaidThisSession += inst.principalAmount * unPaidRatio;
-      interestRepaidThisSession += inst.interestAmount * unPaidRatio;
+      amountToDistribute -= payAmount;
+    }
+  } else {
+    // Standard EMI or Custom payment distribution
+    for (let i = 0; i < updatedInstallments.length && amountToDistribute > 0; i++) {
+      const inst = updatedInstallments[i];
+      if (inst.status === 'paid') continue;
 
-      inst.paidAmount += amountToDistribute;
-      inst.remainingAmount -= amountToDistribute;
-      inst.status = 'partial';
-      inst.paidDate = repayment.paymentDate;
-      inst.paymentMethod = repayment.paymentMethod;
-      inst.referenceNumber = repayment.referenceNumber;
-      inst.receiptNumber = receiptNumber;
+      const remainingOnInst = inst.remainingAmount;
+      if (amountToDistribute >= remainingOnInst) {
+        // Full payment of this installment
+        const unPaidRatio = inst.totalInstallment > 0 ? remainingOnInst / inst.totalInstallment : 1;
+        principalRepaidThisSession += inst.principalAmount * unPaidRatio;
+        interestRepaidThisSession += inst.interestAmount * unPaidRatio;
 
-      amountToDistribute = 0;
+        inst.paidAmount += remainingOnInst;
+        inst.remainingAmount = 0;
+        inst.status = 'paid';
+        inst.paidDate = repayment.paymentDate;
+        inst.paymentMethod = repayment.paymentMethod;
+        inst.referenceNumber = repayment.referenceNumber;
+        inst.receiptNumber = receiptNumber;
+
+        amountToDistribute -= remainingOnInst;
+      } else {
+        // Partial payment
+        const unPaidRatio = inst.totalInstallment > 0 ? amountToDistribute / inst.totalInstallment : 1;
+        principalRepaidThisSession += inst.principalAmount * unPaidRatio;
+        interestRepaidThisSession += inst.interestAmount * unPaidRatio;
+
+        inst.paidAmount += amountToDistribute;
+        inst.remainingAmount -= amountToDistribute;
+        inst.status = 'partial';
+        inst.paidDate = repayment.paymentDate;
+        inst.paymentMethod = repayment.paymentMethod;
+        inst.referenceNumber = repayment.referenceNumber;
+        inst.receiptNumber = receiptNumber;
+
+        amountToDistribute = 0;
+      }
     }
   }
 
   // Recalculate balances
   const balances = calculateOutstandingBalance(updatedInstallments);
-  const isFullySettled = balances.outstandingTotal <= 0;
+  const outstandingPrincipal = isInterestOnly
+    ? loan.outstandingPrincipal
+    : balances.outstandingPrincipal;
+  const outstandingInterest = isInterestOnly
+    ? Math.max(0, loan.outstandingInterest - repayment.amount)
+    : balances.outstandingInterest;
+  const outstandingTotal = outstandingPrincipal + outstandingInterest;
+  const isFullySettled = outstandingTotal <= 0;
 
   const updatedLoan: Loan = {
     ...loan,
@@ -216,9 +249,9 @@ export async function recordLoanRepayment(
     totalPrincipalPaid: loan.totalPrincipalPaid + principalRepaidThisSession,
     totalInterestPaid: loan.totalInterestPaid + interestRepaidThisSession,
     totalAmountPaid: loan.totalAmountPaid + repayment.amount,
-    outstandingPrincipal: balances.outstandingPrincipal,
-    outstandingInterest: balances.outstandingInterest,
-    outstandingTotal: balances.outstandingTotal,
+    outstandingPrincipal,
+    outstandingInterest,
+    outstandingTotal,
     status: isFullySettled ? 'closed' : loan.status,
     updatedAt: new Date().toISOString(),
   };
@@ -230,7 +263,7 @@ export async function recordLoanRepayment(
     memberId: loan.memberId,
     memberName: loan.memberName,
     memberCode: loan.memberCode,
-    type: 'Loan Repayment',
+    type: isInterestOnly ? 'Loan Interest Payment' : 'Loan Repayment',
     category: 'inflow',
     amount: repayment.amount,
     date: repayment.paymentDate,
@@ -238,7 +271,9 @@ export async function recordLoanRepayment(
     referenceNumber: repayment.referenceNumber,
     receiptNumber,
     relatedEntityId: loan.id,
-    description: `Loan #${loan.loanNumber} repayment installment`,
+    description: isInterestOnly
+      ? `Interest-Only Payment for Loan #${loan.loanNumber} (₹${repayment.amount})`
+      : `Loan #${loan.loanNumber} repayment installment`,
     notes: repayment.notes,
     createdBy: adminName,
   });
@@ -253,9 +288,9 @@ export async function recordLoanRepayment(
   }
 
   await logAuditEvent({
-    action: 'Record Loan Repayment',
+    action: isInterestOnly ? 'Record Interest-Only Payment' : 'Record Loan Repayment',
     module: 'loans',
-    details: `Received ₹${repayment.amount} for Loan #${loan.loanNumber} from ${loan.memberName}. Remaining: ₹${balances.outstandingTotal}`,
+    details: `Received ₹${repayment.amount} (${isInterestOnly ? 'Interest Only' : 'EMI'}) for Loan #${loan.loanNumber} from ${loan.memberName}. Remaining Principal: ₹${outstandingPrincipal}, Remaining Total: ₹${outstandingTotal}`,
     entityId: loan.id,
     entityType: 'Loan',
     performedBy: adminName,

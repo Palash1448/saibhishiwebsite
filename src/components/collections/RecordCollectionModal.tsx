@@ -266,6 +266,37 @@ export const RecordCollectionModal: React.FC<RecordCollectionModalProps> = ({
           />
         </div>
 
+        {/* Interest Cutoff Status Alert */}
+        {(() => {
+          const selectedMember = members.find((m) => m.id === selectedMemberId);
+          const cutoffDay = selectedMember?.interestCutoffDay || 10;
+          const payDateObj = new Date(paymentDate);
+          const payDay = isNaN(payDateObj.getDate()) ? 1 : payDateObj.getDate();
+          const isLate = payDay > cutoffDay;
+
+          return isLate ? (
+            <div className="bg-amber-50 border border-amber-300/80 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
+              <span className="text-base leading-none">⚠️</span>
+              <div>
+                <p className="font-bold text-amber-950">Late Deposit Cutoff Rule Applied (Day {payDay} &gt; {cutoffDay}th cutoff)</p>
+                <p className="mt-0.5 text-[11px] text-amber-800">
+                  Because this deposit is made after the {cutoffDay}th of the month, the member will <strong>not receive return/interest for this month only</strong>. Interest returns will start earning from next month onwards.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border border-emerald-300/80 rounded-xl p-3 text-xs text-emerald-900 flex items-start gap-2">
+              <span className="text-base leading-none">✅</span>
+              <div>
+                <p className="font-bold text-emerald-950">On-Time Deposit (Day {payDay} ≤ {cutoffDay}th cutoff)</p>
+                <p className="mt-0.5 text-[11px] text-emerald-800">
+                  Eligible for full interest/returns for this month (@ {selectedMember?.monthlyReturnRate || 1}%/mo).
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Live Calculation Box */}
         <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/80 flex items-center justify-between">
           <div>

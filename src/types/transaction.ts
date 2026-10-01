@@ -6,6 +6,7 @@ export type TransactionType =
   | 'Interest Credit'
   | 'Loan Disbursement'
   | 'Loan Repayment'
+  | 'Loan Interest Payment'
   | 'Processing Fee'
   | 'Expense'
   | 'Withdrawal'

@@ -31,8 +31,14 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
   const [planCode, setPlanCode] = useState('');
   const [monthlyContribution, setMonthlyContribution] = useState<number>(5000);
   const [durationMonths, setDurationMonths] = useState<number>(20);
+  const [monthlyReturnRate, setMonthlyReturnRate] = useState<number>(
+    financeSettings.defaultMonthlyReturnRate || 1.0
+  );
   const [annualInterestRate, setAnnualInterestRate] = useState<number>(
     financeSettings.defaultAnnualReturnRate || 12
+  );
+  const [interestCutoffDay, setInterestCutoffDay] = useState<number>(
+    financeSettings.defaultInterestCutoffDay || 10
   );
   const [returnCalculationMethod, setReturnCalculationMethod] = useState<CalculationMethod>(
     financeSettings.defaultBhishiCalculationMethod || 'simple'
@@ -51,10 +57,13 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
       setPlanCode(planToEdit.planCode);
       setMonthlyContribution(planToEdit.monthlyContribution);
       setDurationMonths(planToEdit.durationMonths);
+      const mRate = planToEdit.monthlyReturnRate ?? (planToEdit.annualInterestRate ? planToEdit.annualInterestRate / 12 : 1.0);
+      setMonthlyReturnRate(mRate);
       setAnnualInterestRate(planToEdit.annualInterestRate);
+      setInterestCutoffDay(planToEdit.interestCutoffDay || planToEdit.paymentDueDay || 10);
       setReturnCalculationMethod(planToEdit.returnCalculationMethod);
       setStartDate(planToEdit.startDate);
-      setPaymentDueDay(planToEdit.paymentDueDay);
+      setPaymentDueDay(planToEdit.paymentDueDay || 10);
       setStatus(planToEdit.status);
       setDescription(planToEdit.description || '');
     } else {
@@ -62,7 +71,10 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
       setPlanCode('');
       setMonthlyContribution(5000);
       setDurationMonths(20);
-      setAnnualInterestRate(financeSettings.defaultAnnualReturnRate || 12);
+      const mRate = financeSettings.defaultMonthlyReturnRate || 1.0;
+      setMonthlyReturnRate(mRate);
+      setAnnualInterestRate(financeSettings.defaultAnnualReturnRate || mRate * 12);
+      setInterestCutoffDay(financeSettings.defaultInterestCutoffDay || 10);
       setReturnCalculationMethod(financeSettings.defaultBhishiCalculationMethod || 'simple');
       setStartDate(new Date().toISOString().slice(0, 10));
       setPaymentDueDay(10);
@@ -96,9 +108,20 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
     if (!planName.trim()) errs.planName = 'Plan name is required';
     if (!monthlyContribution || monthlyContribution <= 0) errs.contribution = 'Monthly contribution must be greater than ₹0';
     if (!durationMonths || durationMonths <= 0) errs.duration = 'Duration must be at least 1 month';
-    if (annualInterestRate < 0) errs.rate = 'Interest rate cannot be negative';
+    if (monthlyReturnRate < 0) errs.rate = 'Monthly return rate cannot be negative';
+    if (!interestCutoffDay || interestCutoffDay < 1 || interestCutoffDay > 31) errs.cutoff = 'Cutoff day must be between 1 and 31';
     setErrors(errs);
     return Object.keys(errs).length === 0;
+  };
+
+  const handleMonthlyRateChange = (mRate: number) => {
+    setMonthlyReturnRate(mRate);
+    setAnnualInterestRate(Math.round(mRate * 12 * 10) / 10);
+  };
+
+  const handleAnnualRateChange = (aRate: number) => {
+    setAnnualInterestRate(aRate);
+    setMonthlyReturnRate(Math.round((aRate / 12) * 100) / 100);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,11 +136,13 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
           planCode,
           monthlyContribution,
           durationMonths,
+          monthlyReturnRate,
           annualInterestRate,
+          interestCutoffDay,
           returnCalculationMethod,
           startDate,
           endDate: computedEndDate,
-          paymentDueDay,
+          paymentDueDay: interestCutoffDay,
           status,
           description,
         });
@@ -130,11 +155,13 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
           planCode,
           monthlyContribution,
           durationMonths,
+          monthlyReturnRate,
           annualInterestRate,
+          interestCutoffDay,
           returnCalculationMethod,
           startDate,
           endDate: computedEndDate,
-          paymentDueDay,
+          paymentDueDay: interestCutoffDay,
           status,
           description,
         });
@@ -191,13 +218,14 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
 
           <div>
             <Input
-              label="Monthly Contribution (₹)"
+              label="Base Monthly Installment (₹)"
               type="number"
               prefixText="₹"
               required
               value={monthlyContribution}
               onChange={(e) => setMonthlyContribution(Number(e.target.value))}
               error={errors.contribution}
+              helperText="Base tier; member can customize monthly investment amount upon enrollment"
             />
           </div>
 
@@ -217,14 +245,33 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
 
           <div>
             <Input
-              label="Annual Return / Interest Rate (%)"
+              label="Monthly Return Rate (% / mo)"
               type="number"
-              step="0.1"
-              suffixText="% p.a."
+              step="0.01"
+              suffixText="% / mo"
               required
-              value={annualInterestRate}
-              onChange={(e) => setAnnualInterestRate(Number(e.target.value))}
+              value={monthlyReturnRate}
+              onChange={(e) => handleMonthlyRateChange(Number(e.target.value))}
               error={errors.rate}
+              helperText={`Yields ${annualInterestRate}% p.a. equivalent annual return`}
+            />
+          </div>
+
+          <div>
+            <Input
+              label="Monthly Interest Cutoff Day"
+              type="number"
+              min={1}
+              max={31}
+              required
+              value={interestCutoffDay}
+              onChange={(e) => {
+                const day = Number(e.target.value);
+                setInterestCutoffDay(day);
+                setPaymentDueDay(day);
+              }}
+              error={errors.cutoff}
+              helperText="Deposits after this day forfeit interest for that month only"
             />
           </div>
 
@@ -249,18 +296,6 @@ export const BhishiPlanFormModal: React.FC<BhishiPlanFormModalProps> = ({
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Input
-              label="Payment Due Day of Month"
-              type="number"
-              min={1}
-              max={31}
-              value={paymentDueDay}
-              onChange={(e) => setPaymentDueDay(Number(e.target.value))}
-              helperText="e.g. 10th of every month"
             />
           </div>
         </div>

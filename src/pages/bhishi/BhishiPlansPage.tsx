@@ -45,15 +45,15 @@ export const BhishiPlansPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-card">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-card">
         <div>
-          <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
-            Bhishi Plans & Investment Schemes
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display">
+            Bhishi Plans & Schemes
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Configure monthly contribution tiers, tenures, maturity calculation engines, and annual return rates
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Configure monthly contribution tiers, tenures, and annual return rates
           </p>
         </div>
 
@@ -65,13 +65,14 @@ export const BhishiPlansPage: React.FC = () => {
             setPlanToEdit(null);
             setIsFormModalOpen(true);
           }}
+          className="w-full sm:w-auto justify-center"
         >
-          + Create New Bhishi Plan
+          + Create New Plan
         </Button>
       </div>
 
       {/* Grid of Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {plans.map((plan) => {
           const calc = calculateMaturityAmount(
             plan.monthlyContribution,
@@ -83,24 +84,24 @@ export const BhishiPlansPage: React.FC = () => {
           return (
             <div
               key={plan.id}
-              className="bg-white rounded-3xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-200 p-6 flex flex-col justify-between"
+              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-200 p-4 sm:p-6 flex flex-col justify-between"
             >
               <div>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3.5">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-base font-bold text-slate-900">{plan.planName}</h2>
                       <Badge variant={getStatusBadgeVariant(plan.status)} size="sm">
                         {plan.status}
                       </Badge>
                     </div>
                     <p className="text-xs font-mono text-slate-400 mt-0.5">
-                      Code: {plan.planCode} • Due day: {plan.paymentDueDay}th of month
+                      Code: {plan.planCode} • Due day: {plan.paymentDueDay}th
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => {
                         setPlanToEdit(plan);
@@ -122,60 +123,60 @@ export const BhishiPlansPage: React.FC = () => {
                 </div>
 
                 {/* Main Stats Strip */}
-                <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center mb-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100 text-center mb-3.5">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase">Monthly Installment</span>
-                    <p className="text-base font-bold font-mono text-emerald-800 mt-0.5">
+                    <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase block truncate">Monthly Due</span>
+                    <p className="text-xs sm:text-base font-bold font-mono text-emerald-800 mt-0.5">
                       {formatCurrency(plan.monthlyContribution)}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase">Duration</span>
-                    <p className="text-base font-bold text-slate-900 mt-0.5">
-                      {plan.durationMonths} Months
+                    <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase block truncate">Duration</span>
+                    <p className="text-xs sm:text-base font-bold text-slate-900 mt-0.5">
+                      {plan.durationMonths} Mo
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase">Return Rate</span>
-                    <p className="text-base font-bold font-mono text-purple-700 mt-0.5">
-                      {plan.annualInterestRate}% p.a.
+                    <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold uppercase block truncate">Return</span>
+                    <p className="text-xs sm:text-base font-bold font-mono text-purple-700 mt-0.5">
+                      {plan.annualInterestRate}%
                     </p>
                   </div>
                 </div>
 
                 {/* Calculation Engine Breakdown */}
-                <div className="space-y-2 text-xs text-slate-600 bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-100 mb-4">
+                <div className="space-y-1.5 text-xs text-slate-600 bg-emerald-50/50 p-3 sm:p-3.5 rounded-xl border border-emerald-100 mb-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Total Principal Deposit:</span>
+                    <span className="text-slate-500">Principal Deposit:</span>
                     <span className="font-bold font-mono text-slate-900">{formatCurrency(calc.totalPrincipal)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Estimated Interest Payout:</span>
+                    <span className="text-slate-500">Estimated Returns:</span>
                     <span className="font-bold font-mono text-emerald-700">+{formatCurrency(calc.totalInterest)}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-emerald-200/80 font-bold">
-                    <span className="text-emerald-950">Estimated Maturity Sum:</span>
+                  <div className="flex items-center justify-between pt-1.5 border-t border-emerald-200/80 font-bold">
+                    <span className="text-emerald-950">Maturity Sum:</span>
                     <span className="text-sm font-mono text-emerald-900">{formatCurrency(calc.maturityAmount)}</span>
                   </div>
                 </div>
 
                 {plan.description && (
-                  <p className="text-xs text-slate-500 mb-4 leading-relaxed italic">{plan.description}</p>
+                  <p className="text-xs text-slate-500 mb-3 leading-relaxed italic">{plan.description}</p>
                 )}
               </div>
 
               {/* Footer info */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500">
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px] sm:text-xs text-slate-500">
                 <span className="flex items-center gap-1">
                   <Users className="w-3.5 h-3.5 text-slate-400" />
-                  {plan.enrolledMembersCount || 0} Members Enrolled
+                  {plan.enrolledMembersCount || 0} Enrolled
                 </span>
 
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  Started: {formatDate(plan.startDate)}
+                  {formatDate(plan.startDate)}
                 </span>
               </div>
             </div>

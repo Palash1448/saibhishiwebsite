@@ -3,7 +3,7 @@ import { BusinessSettings, FinanceSettings } from '../types/settings';
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   businessName: 'SaiBhishi Finance & Investment Co.',
   tagline: 'Trusted Community Savings, Bhishi & Microfinance Solutions',
-  logoUrl: '',
+  logoUrl: '/logo.png',
   address: 'Plot No. 42, Sai Complex, Main Market Road',
   cityStatePincode: 'Nagpur, Maharashtra - 440010',
   phone: '+91 98765 43210',
@@ -20,7 +20,9 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
 };
 
 export const DEFAULT_FINANCE_SETTINGS: FinanceSettings = {
+  defaultMonthlyReturnRate: 1, // 1% per month
   defaultAnnualReturnRate: 12, // 12% p.a.
+  defaultInterestCutoffDay: 10, // 10th of every month
   defaultBhishiCalculationMethod: 'simple',
   defaultMonthlyLoanInterestRate: 2, // 2% per month
   defaultLoanCalculationMethod: 'flat',

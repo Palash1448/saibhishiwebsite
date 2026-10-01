@@ -42,18 +42,19 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, rec
       subtitle={`Receipt #${receipt.receiptNumber}`}
       size="lg"
       footer={
-        <div className="flex items-center justify-between w-full no-print">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full no-print">
           <Button
             variant="outline"
             size="sm"
             leftIcon={<Share2 className="w-4 h-4 text-emerald-600" />}
             onClick={handleShareWhatsApp}
+            className="w-full sm:w-auto justify-center"
           >
-            Share on WhatsApp
+            Share WhatsApp
           </Button>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button variant="ghost" size="sm" onClick={onClose} className="flex-1 sm:flex-none justify-center">
               Close
             </Button>
             <Button
@@ -61,6 +62,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, rec
               size="sm"
               leftIcon={<Printer className="w-4 h-4" />}
               onClick={handlePrint}
+              className="flex-1 sm:flex-none justify-center"
             >
               Print Receipt
             </Button>
@@ -79,13 +81,17 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, rec
         <div className="border-b-2 border-slate-900 pb-5">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-lg">
-                  ₹
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/logo.png"
+                  alt={receipt.businessName}
+                  className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200"
+                />
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 uppercase">
+                    {receipt.businessName}
+                  </h1>
                 </div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 uppercase">
-                  {receipt.businessName}
-                </h1>
               </div>
               {receipt.tagline && (
                 <p className="text-xs text-slate-600 mt-0.5 font-medium">{receipt.tagline}</p>

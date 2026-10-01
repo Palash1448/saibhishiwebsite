@@ -222,6 +222,7 @@ export const IssueLoanModal: React.FC<IssueLoanModalProps> = ({
                 options={[
                   { value: 'flat', label: 'Flat Rate Interest (Simple EMI)' },
                   { value: 'reducing_balance', label: 'Reducing Balance (Standard Bank EMI)' },
+                  { value: 'interest_only', label: 'Interest-Only (Monthly Interest • Principal at End)' },
                 ]}
               />
             </div>
